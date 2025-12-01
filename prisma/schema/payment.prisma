@@ -1,0 +1,16 @@
+model Payment {
+  id            String      @id @default(uuid())
+  userId        String
+  amount        Float
+  currency      String      @default("USD")
+  status        PaymentStatus @default(PENDING)
+  plan          SubscriptionPlan
+  transactionId String?     // Stripe / SSLCommerz transaction ID
+
+  user          User        @relation(fields: [userId], references: [id])
+
+  createdAt     DateTime    @default(now())
+}
+
+// (Subscription + verification badge)
+

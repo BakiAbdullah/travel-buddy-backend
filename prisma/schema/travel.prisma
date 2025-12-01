@@ -1,0 +1,21 @@
+model TravelPlans {
+  id          String     @id @default(uuid())
+  userId      String
+  destination String
+  startDate   DateTime
+  endDate     DateTime
+  budgetMin   Int?
+  budgetMax   Int?
+  travelType  TravelType
+  description String?
+  visibility  Boolean    @default(true)
+
+  // Relation
+  user User @relation(fields: [userId], references: [id])
+
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  travelRequests TravelRequest[]
+}
+
+// (Who is traveling, where, when, what type)

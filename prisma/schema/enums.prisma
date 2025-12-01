@@ -1,0 +1,33 @@
+enum UserRole {
+  ADMIN
+  USER
+}
+
+enum Gender {
+  MALE
+  FEMALE
+}
+
+enum TravelType {
+  SOLO
+  FAMILY
+  FRIENDS
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+}
+
+enum SubscriptionPlan {
+  MONTHLY
+  YEARLY
+  VERIFIED_BADGE
+}
+
+enum RequestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}

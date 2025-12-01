@@ -1,0 +1,33 @@
+model User {
+  id               String   @id @default(uuid())
+  name             String
+  email            String
+  password         String
+  role             UserRole
+  fullName         String?
+  profileImage     String?
+  bio              String?
+  interests        String[] // Hiking, Food, Photography...
+  visitedCountries String[]
+  currentLocation  String?
+  isVerified       Boolean  @default(false)
+
+  // Relations
+  travelPlans     TravelPlans[]
+  reviewsGiven    Review[]        @relation("ReviewsGiven")
+  reviewsReceived Review[]        @relation("ReviewsReceived")
+  payments        Payment[]
+  travelRequests  TravelRequest[]
+  notifications   Notification[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// Model	Relation
+// User → TravelPlan	1:N
+// User → ReviewsGiven	1:Nz
+// User → ReviewsReceived	1:N
+// User → Payment	1:N
+// TravelPlan → TravelRequest	1:N
+// User → TravelRequest	1:N

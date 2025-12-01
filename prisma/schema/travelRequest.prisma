@@ -1,0 +1,14 @@
+model TravelRequest {
+  id          String        @id @default(uuid())
+  planId      String
+  requesterId String
+  status      RequestStatus @default(PENDING)
+
+  plan      TravelPlans @relation(fields: [planId], references: [id])
+  requester User        @relation(fields: [requesterId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// Match / Request Model (Optional but Highly Recommended)
+// Users can request to join a Travel Plan → খুব গুরুত্বপূর্ণ feature!
