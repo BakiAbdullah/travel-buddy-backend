@@ -10,5 +10,3 @@ model TravelRequest {
   createdAt DateTime @default(now())
 }
 
-// Match / Request Model (Optional but Highly Recommended)
-// Users can request to join a Travel Plan → খুব গুরুত্বপূর্ণ feature!

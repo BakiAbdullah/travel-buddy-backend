@@ -2,14 +2,14 @@ import { Request, Response } from "express";
 import httpStatus from "http-status";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
-import { TravelPlanService } from "./travel.service";
 import { IAuthUser } from "../../interfaces/user";
-
+import pickQuery from "../../../shared/pickQuery";
+import { TravelPlanService } from "./travel.service";
 
 const createTravelPlansIntoDB = catchAsync(
   async (req: Request & { user?: IAuthUser }, res: Response) => {
     const userId = req.user?.id;
-  
+
     const result = await TravelPlanService.createTravelPlansIntoDB(
       userId as string,
       req.body
@@ -24,48 +24,82 @@ const createTravelPlansIntoDB = catchAsync(
   }
 );
 
-// const getAllFromDB = catchAsync(async (req: Request & { user?: IAuthUser }, res: Response) => {
-//     const filters = pick(req.query, ['startDate', 'endDate']);
-//     const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder']);
+const getAllTravelPlans = catchAsync(
+  async (req: Request & { user?: IAuthUser }, res: Response) => {
+    const filters = pickQuery(req.query, [
+      "searchTerm",
+      "startDateTime",
+      "endDateTime",
+      "destination",
+      "itinerary",
+      "travelType",
+      "visibility",
+    ]);
+    const options = pickQuery(req.query, [
+      "limit",
+      "page",
+      "sortBy",
+      "sortOrder",
+    ]);
 
-//     const user = req.user;
-//     const result = await ScheduleService.getAllFromDB(filters, options, user as IAuthUser);
+    const result = await TravelPlanService.getAllTravelPlans(filters, options);
 
-//     sendResponse(res, {
-//         statusCode: httpStatus.OK,
-//         success: true,
-//         message: "Schedule fetched successfully!",
-//         data: result.data,
-//         meta: result.meta
-//     });
-// });
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "All Travel Plans retrieved successfully!",
+      data: result.data,
+      meta: result.meta,
+    });
+  }
+);
 
-// const getByIdFromDB = catchAsync(async (req: Request, res: Response) => {
-//     const { id } = req.params;
-//     const result = await ScheduleService.getByIdFromDB(id);
-//     sendResponse(res, {
-//         statusCode: httpStatus.OK,
-//         success: true,
-//         message: 'Schedule retrieval successfully',
-//         data: result,
-//     });
-// });
+const updateTravelPlanById = catchAsync(
+  async (req: Request & { user?: IAuthUser }, res: Response) => {
+    // const user = req.user;
+    const { id } = req.params;
 
-// const deleteFromDB = catchAsync(async (req: Request, res: Response) => {
-//     const { id } = req.params;
-//     const result = await ScheduleService.deleteFromDB(id);
-//     sendResponse(res, {
-//         statusCode: httpStatus.OK,
-//         success: true,
-//         message: 'Schedule deleted successfully',
-//         data: result,
-//     });
-// });
+    const result = await TravelPlanService.updateTravelPlanById(
+      id,
+      // user as IAuthUser,
+      req.body
+    );
 
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Travel plans updated successfully!",
+      data: result,
+    });
+  }
+);
+
+const getTravelPlanById = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await TravelPlanService.getTravelPlanById(id);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Travel Plan retrieval successfull!",
+    data: result,
+  });
+});
+
+const deleteTravelPlanById = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await TravelPlanService.deleteTravelPlanById(id);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Travel Plan deletion successfull!",
+    data: result,
+  });
+});
 
 export const TravelPlanController = {
   createTravelPlansIntoDB,
-  // getAllFromDB,
-  // getByIdFromDB,
-  // deleteFromDB
+  getAllTravelPlans,
+  updateTravelPlanById,
+  getTravelPlanById,
+  deleteTravelPlanById,
 };

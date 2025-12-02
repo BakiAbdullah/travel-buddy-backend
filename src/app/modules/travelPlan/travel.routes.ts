@@ -1,26 +1,15 @@
-import { UserRole } from '@prisma/client';
-import express from 'express';
-import { checkAuth } from '../../middlewares/checkAuth';
-import { TravelPlanController } from './travel.controller';
+import { UserRole } from "@prisma/client";
+import express from "express";
+import { checkAuth } from "../../middlewares/checkAuth";
+import { TravelPlanController } from "./travel.controller";
 
 const router = express.Router();
 
-// router.get(
-//     '/',
-//     auth(UserRole.DOCTOR, UserRole.ADMIN, UserRole.SUPER_ADMIN),
-//     ScheduleController.getAllFromDB
-// );
-
-// /**
-//  * API ENDPOINT: /schedule/:id
-//  * 
-//  * Get schedule data by id
-//  */
-// router.get(
-//     '/:id',
-//     auth(UserRole.SUPER_ADMIN, UserRole.ADMIN, UserRole.DOCTOR, UserRole.PATIENT),
-//     ScheduleController.getByIdFromDB
-// );
+router.get(
+  "/match",
+  checkAuth(UserRole.ADMIN, UserRole.USER),
+  TravelPlanController.getAllTravelPlans
+);
 
 router.post(
   "/create-travel-plan",
@@ -28,17 +17,31 @@ router.post(
   TravelPlanController.createTravelPlansIntoDB
 );
 
+/**
+ * Update Travel Plans by id
+ */
+router.patch(
+  "/:id",
+  checkAuth(UserRole.USER),
+  TravelPlanController.updateTravelPlanById
+);
 
+/**
+ * Get Travel Plans by id
+ */
+router.get(
+  "/:id",
+  checkAuth(UserRole.ADMIN),
+  TravelPlanController.getTravelPlanById
+);
 
-// /**
-//  * API ENDPOINT: /schdeule/:id
-//  * 
-//  * Delete schedule data by id
-//  */
-// router.delete(
-//     '/:id',
-//     auth(UserRole.SUPER_ADMIN, UserRole.ADMIN),
-//     ScheduleController.deleteFromDB
-// );
+/**
+ * Delete Travel Plans by id
+ */
+router.delete(
+  "/:id",
+  checkAuth(UserRole.ADMIN),
+  TravelPlanController.deleteTravelPlanById
+);
 
 export const TravelPlanRoutes = router;

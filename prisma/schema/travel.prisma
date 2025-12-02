@@ -15,6 +15,5 @@ model TravelPlans {
   createdAt      DateTime        @default(now())
   updatedAt      DateTime        @updatedAt
   travelRequests TravelRequest[]
+  reviews        Review[]
 }
-
-// (Who is traveling, where, when, what type)

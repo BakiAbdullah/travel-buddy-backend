@@ -1,16 +1,15 @@
 model Review {
-   id          String   @id @default(uuid())
-  reviewerId  String
-  reviewedId  String
-  rating      Int      // 1–5
-  comment     String?
-  
-  reviewer    User     @relation("ReviewsGiven", fields: [reviewerId], references: [id])
-  reviewed    User     @relation("ReviewsReceived", fields: [reviewedId], references: [id])
+  id           String  @id @default(uuid())
+  reviewerId   String
+  reviewedId   String
+  travelPlanId String
+  rating       Int
+  comment      String?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  travelPlan TravelPlans @relation(fields: [travelPlanId], references: [id])
+  reviewer   User        @relation("ReviewsGiven", fields: [reviewerId], references: [id])
+  reviewed   User        @relation("ReviewsReceived", fields: [reviewedId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
-
-// একই ব্যবহারকারী অন্য ব্যবহারকারীকে রিভিউ দিতে পারবে
-// ✔ রিভিউ এডিট/ডিলিট করা যাবে
