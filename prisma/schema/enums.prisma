@@ -37,3 +37,8 @@ enum RequestStatus {
   ACCEPTED
   REJECTED
 }
+
+enum VisibilityType {
+  PUBLIC
+  PRIVATE
+}

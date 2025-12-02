@@ -26,6 +26,7 @@ const login = async (credentials: { email: string; password: string }) => {
   // Now if all ok => we will generate jwt access & refresh token
   const accessToken = jwtHelpers.generateToken(
     {
+      id: user.id,
       email: user.email,
       role: user.role,
     },
@@ -36,6 +37,7 @@ const login = async (credentials: { email: string; password: string }) => {
   // Generate Refresh token
   const refreshToken = jwtHelpers.generateToken(
     {
+      id: user.id,
       email: user.email,
       role: user.role,
     },

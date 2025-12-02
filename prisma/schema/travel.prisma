@@ -1,14 +1,13 @@
 model TravelPlans {
-  id          String     @id @default(uuid())
-  userId      String
-  destination String
-  startDate   DateTime
-  endDate     DateTime
-  budgetMin   Int?
-  budgetMax   Int?
-  travelType  TravelType
-  description String?
-  visibility  Boolean    @default(true)
+  id            String         @id @default(uuid())
+  userId        String
+  destination   String
+  startDateTime DateTime
+  endDateTime   DateTime
+  budgetRange   String?
+  travelType    TravelType
+  itinerary     String?
+  visibility    VisibilityType @default(PUBLIC)
 
   // Relation
   user User @relation(fields: [userId], references: [id])

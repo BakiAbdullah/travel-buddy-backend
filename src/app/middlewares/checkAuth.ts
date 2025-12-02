@@ -28,6 +28,7 @@ export const checkAuth = (...roles: UserRole[]) => {
         config.jwt_vars.access_token_secret as Secret
       );
 
+      // Attach user to request object
       req.user = verifiedUser;
 
       // Case 2: Not an admin role
