@@ -1,16 +1,19 @@
 model User {
-  id               String   @id @default(uuid())
-  name             String
-  email            String
-  password         String
-  role             UserRole
-  fullName         String?
-  profileImage     String?
-  bio              String?
-  interests        String[] // Hiking, Food, Photography...
-  visitedCountries String[]
-  currentLocation  String?
-  isVerified       Boolean  @default(false)
+  id                 String     @id @default(uuid())
+  name               String
+  email              String     @unique
+  password           String
+  contactNumber      String?
+  role               UserRole
+  profileImage       String?
+  needPasswordChange Boolean    @default(true)
+  isDeleted          Boolean    @default(false)
+  status             UserStatus @default(ACTIVE)
+  bio                String?
+  travelInterests    String[] // Hiking, Food, Photography...
+  visitedCountries   String[]
+  currentLocation    String?
+  isVerified         Boolean    @default(false)
 
   // Relations
   travelPlans     TravelPlans[]
@@ -26,7 +29,7 @@ model User {
 
 // Model	Relation
 // User → TravelPlan	1:N
-// User → ReviewsGiven	1:Nz
+// User → ReviewsGiven	1:N
 // User → ReviewsReceived	1:N
 // User → Payment	1:N
 // TravelPlan → TravelRequest	1:N

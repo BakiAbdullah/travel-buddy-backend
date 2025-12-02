@@ -8,6 +8,12 @@ enum Gender {
   FEMALE
 }
 
+enum UserStatus {
+  ACTIVE
+  BLOCKED
+  DELETED
+}
+
 enum TravelType {
   SOLO
   FAMILY
