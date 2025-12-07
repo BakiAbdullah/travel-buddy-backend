@@ -1,10 +1,12 @@
-import { UserStatus } from "@prisma/client";
+import { UserRole, UserStatus } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import config from "../../../config";
 import httpStatus from "http-status";
 import ApiError from "../../errors/ApiError";
 import { prisma } from "../../../shared/prismaInstance";
 import { jwtHelpers } from "../../../helpers/jwtHelpers";
+import { IAuthUser } from "../../interfaces/user";
+import { Secret } from "jsonwebtoken";
 
 const login = async (credentials: { email: string; password: string }) => {
   const user = await prisma.user.findUniqueOrThrow({
@@ -52,130 +54,157 @@ const login = async (credentials: { email: string; password: string }) => {
   };
 };
 
-// const refreshToken = async (token: string) => {
-//   let decodedData;
-//   try {
-//     decodedData = jwtHelper.verifyToken(
-//       token,
-//       config.jwt_vars.refresh_token_secret as Secret
-//     );
-//   } catch (err) {
-//     throw new Error("You are not authorized!");
-//   }
+// Get My Profile
+const getMyProfile = async (user: IAuthUser) => {
+  const userInfo = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: user?.email,
+      status: UserStatus.ACTIVE,
+    },
+    select: {
+      id: true,
+      email: true,
+      needPasswordChange: true,
+      visitedCountries: true,
+      currentLocation: true,
+      bio: true,
+      role: true,
+      status: true,
+    },
+  });
 
-//   const userData = await prisma.user.findUniqueOrThrow({
-//     where: {
-//       email: decodedData.email,
-//       status: UserStatus.ACTIVE,
-//     },
-//   });
+  let profileInfo;
 
-//   const accessToken = jwtHelper.generateToken(
-//     {
-//       email: userData.email,
-//       role: userData.role,
-//     },
-//     config.jwt_vars.access_token_secret as Secret,
-//     config.jwt_vars.access_expires_in as string
-//   );
+  if (userInfo.role === UserRole.ADMIN) {
+    profileInfo = await prisma.user.findUnique({
+      where: {
+        email: userInfo.email,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        profileImage: true,
+        contactNumber: true,
+        isDeleted: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  } else if (userInfo.role === UserRole.USER) {
+    profileInfo = await prisma.user.findUnique({
+      where: {
+        email: userInfo.email,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        profileImage: true,
+        travelInterests: true,
+        travelPlans: true,
+        visitedCountries: true,
+        reviewsGiven: true,
+        reviewsReceived: true,
+        rating: true,
+        contactNumber: true,
+        isDeleted: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    });
+  } 
 
-//   const refreshToken = jwtHelper.generateToken(
-//     {
-//       email: userData.email,
-//       role: userData.role,
-//     },
-//     config.jwt_vars.refresh_token_secret as Secret,
-//     config.jwt_vars.refresh_expires_in as string
-//   );
+  return { ...userInfo, ...profileInfo };
+};
 
-//   return {
-//     accessToken,
-//     refreshToken,
-//     needPasswordChange: userData.needPasswordChange,
-//   };
-// };
+// Refresh Token
+const refreshToken = async (token: string) => {
+  let decodedData;
+  try {
+    decodedData = jwtHelpers.verifyToken(
+      token,
+      config.jwt_vars.refresh_token_secret as Secret
+    );
+  } catch (err) {
+    throw new Error("You are not authorized!");
+  }
+
+  const userData = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: decodedData.email,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  const accessToken = jwtHelpers.generateToken(
+    {
+      email: userData.email,
+      role: userData.role,
+    },
+    config.jwt_vars.access_token_secret as Secret,
+    config.jwt_vars.access_expires_in as string
+  );
+
+  const refreshToken = jwtHelpers.generateToken(
+    {
+      email: userData.email,
+      role: userData.role,
+    },
+    config.jwt_vars.refresh_token_secret as Secret,
+    config.jwt_vars.refresh_expires_in as string
+  );
+
+  return {
+    accessToken,
+    refreshToken,
+    needPasswordChange: userData.needPasswordChange,
+  };
+};
+
+const resetPassword = async (
+  token: string,
+  payload: { id: string; password: string }
+) => {
+  const userData = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: payload.id,
+      status: UserStatus.ACTIVE,
+    },
+  });
+
+  const isValidToken = jwtHelpers.verifyToken(
+    token,
+    config.jwt_vars.reset_pass_token_secret as Secret
+  );
+
+  if (!isValidToken) {
+    throw new ApiError(httpStatus.FORBIDDEN, "Forbidden!");
+  }
+
+  // hash password
+  const password = await bcrypt.hash(
+    payload.password,
+    Number(config.bcrypt_salt_rounds)
+  );
+
+  // update into database
+  await prisma.user.update({
+    where: {
+      id: payload.id,
+    },
+    data: {
+      password,
+      needPasswordChange: false,
+    },
+  });
+};
 
 
-
-// const getMe = async (user: any) => {
-//   const accessToken = user.accessToken;
-//   const decodedData = jwtHelper.verifyToken(
-//     accessToken,
-//     config.jwt_vars.access_token_secret as Secret
-//   );
-
-//   const userData = await prisma.user.findUniqueOrThrow({
-//     where: {
-//       email: decodedData.email,
-//       status: UserStatus.ACTIVE,
-//     },
-//     select: {
-//       id: true,
-//       email: true,
-//       role: true,
-//       needPasswordChange: true,
-//       status: true,
-//       createdAt: true,
-//       updatedAt: true,
-//       admin: {
-//         select: {
-//           id: true,
-//           name: true,
-//           email: true,
-//           profilePhoto: true,
-//           contactNumber: true,
-//           isDeleted: true,
-//           createdAt: true,
-//           updatedAt: true,
-//         },
-//       },
-//       doctor: {
-//         select: {
-//           id: true,
-//           name: true,
-//           email: true,
-//           profilePhoto: true,
-//           contactNumber: true,
-//           address: true,
-//           registrationNumber: true,
-//           experience: true,
-//           gender: true,
-//           appointmentFee: true,
-//           qualification: true,
-//           currentWorkingPlace: true,
-//           designation: true,
-//           averageRating: true,
-//           isDeleted: true,
-//           createdAt: true,
-//           updatedAt: true,
-//           doctorSpecialities: {
-//             include: {
-//               specialities: true,
-//             },
-//           },
-//         },
-//       },
-//       patient: {
-//         select: {
-//           id: true,
-//           name: true,
-//           email: true,
-//           profilePhoto: true,
-//           // contactNumber: true,
-//           address: true,
-//           isDeleted: true,
-//           createdAt: true,
-//           updatedAt: true,
-//           patientHealthData: true,
-//         },
-//       },
-//     },
-//   });
-
-//   return userData;
-// };
 
 export const AuthServices = {
   login,
-  // refreshToken,
+  getMyProfile,
+  refreshToken,
+  resetPassword,
 };

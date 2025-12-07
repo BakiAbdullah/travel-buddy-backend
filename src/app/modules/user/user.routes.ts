@@ -7,9 +7,9 @@ import { UserRole } from "@prisma/client";
 
 const router = express.Router();
 
-// router.get("/", checkAuth(UserRole.ADMIN), userController.getAllUsersFromDB);
+router.get("/", userController.getAllUsersFromDB);
 
-router.get("/me", checkAuth(UserRole.ADMIN, UserRole.USER), userController.getMyProfile);
+router.get("/:id",  userController.getSingleUserFromDB);
 
 router.post(
   "/create-admin",
@@ -23,7 +23,6 @@ router.post(
 
 router.post(
   "/register",
-  checkAuth(UserRole.ADMIN),
   fileUploaderUtils.upload.single("file"),
   (req: Request, res: Response, next: NextFunction) => {
     req.body = userValidation.createUser.parse(JSON.parse(req.body.data));

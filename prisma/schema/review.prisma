@@ -1,10 +1,12 @@
 model Review {
   id           String  @id @default(uuid())
+  rating       Float      @default(0.0)
+  comment      String?
+
+  // Relations
   reviewerId   String
   reviewedId   String
   travelPlanId String
-  rating       Int
-  comment      String?
 
   travelPlan TravelPlans @relation(fields: [travelPlanId], references: [id])
   reviewer   User        @relation("ReviewsGiven", fields: [reviewerId], references: [id])

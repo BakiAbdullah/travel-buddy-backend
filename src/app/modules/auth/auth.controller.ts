@@ -4,6 +4,7 @@ import { AuthServices } from "./auth.services";
 import httpStatus from "http-status";
 import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
+import { IAuthUser } from "../../interfaces/user";
 
 const login = catchAsync(async (req: Request, res: Response) => {
   const result = await AuthServices.login(req.body);
@@ -34,26 +35,42 @@ const login = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
-// const refreshToken = catchAsync(async (req: Request, res: Response) => {
-//   const { refreshToken } = req.cookies;
+// Get My Profile
+const getMyProfile = catchAsync(
+  async (req: Request & { user?: IAuthUser }, res: Response) => {
+    const user = req.user;
 
-//   const result = await AuthServices.refreshToken(refreshToken);
-//   res.cookie("accessToken", result.accessToken, {
-//     secure: true,
-//     httpOnly: true,
-//     sameSite: "none",
-//     maxAge: 1000 * 60 * 60,
-//   });
+    const result = await AuthServices.getMyProfile(user as IAuthUser);
 
-//   sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: "Access token genereated successfully!",
-//     data: {
-//       message: "Access token genereated successfully!",
-//     },
-//   });
-// });
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "My profile data fetched!",
+      data: result,
+    });
+  }
+);
+
+const refreshToken = catchAsync(async (req: Request, res: Response) => {
+  const { refreshToken } = req.cookies;
+
+  const result = await AuthServices.refreshToken(refreshToken);
+  res.cookie("accessToken", result.accessToken, {
+    secure: true,
+    httpOnly: true,
+    sameSite: "none",
+    maxAge: 1000 * 60 * 60,
+  });
+
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Access token genereated successfully!",
+    data: {
+      message: "Access token genereated successfully!",
+    },
+  });
+});
 
 // const changePassword = catchAsync(
 //   async (req: Request & { user?: any }, res: Response) => {
@@ -81,18 +98,18 @@ const login = catchAsync(async (req: Request, res: Response) => {
 //   });
 // });
 
-// const resetPassword = catchAsync(async (req: Request, res: Response) => {
-//   const token = req.headers.authorization || "";
+const resetPassword = catchAsync(async (req: Request, res: Response) => {
+  const token = req.headers.authorization || "";
 
-//   await AuthServices.resetPassword(token, req.body);
+  await AuthServices.resetPassword(token, req.body);
 
-//   sendResponse(res, {
-//     statusCode: httpStatus.OK,
-//     success: true,
-//     message: "Password Reset!",
-//     data: null,
-//   });
-// });
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "Password Reset!",
+    data: null,
+  });
+});
 
 // const getMe = catchAsync(async (req: Request, res: Response) => {
 //   const userSession = req.cookies;
@@ -108,9 +125,10 @@ const login = catchAsync(async (req: Request, res: Response) => {
 
 export const AuthController = {
   login,
-  // refreshToken,
+  getMyProfile,
+  refreshToken,
+  resetPassword,
   // changePassword,
-  // resetPassword,
   // forgotPassword,
   // getMe,
 };

@@ -4,6 +4,7 @@ import { IAuthUser } from "../../interfaces/user";
 import { prisma } from "../../../shared/prismaInstance";
 
 const createReviewIntoDB = async (user: IAuthUser, payload: any) => {
+  // Find Reviewer
   const reviewer = await prisma.user.findUniqueOrThrow({
     where: {
       email: user?.email,
@@ -12,17 +13,23 @@ const createReviewIntoDB = async (user: IAuthUser, payload: any) => {
 
   console.log({ reviewer });
 
-  const travelData = await prisma.travelPlans.findUniqueOrThrow({
+  const travelPlan = await prisma.travelPlans.findUniqueOrThrow({
     where: {
       id: payload.travelPlanId,
     },
   });
 
-  console.log({ travelData });
+  console.log({ travelPlan });
 
   // You cannot review your own trip
-  if (reviewer.id === travelData.userId) {
+  if (reviewer.id === travelPlan.userId) {
     throw new ApiError(httpStatus.BAD_REQUEST, "This is not your trip!");
+  }
+
+  // Convert rating to float
+  const ratingFloat = parseFloat(payload.rating);
+  if (isNaN(ratingFloat)) {
+    throw new ApiError(httpStatus.BAD_REQUEST, "Invalid rating value!");
   }
 
   return await prisma.$transaction(async (tnx) => {
@@ -30,32 +37,33 @@ const createReviewIntoDB = async (user: IAuthUser, payload: any) => {
       data: {
         travelPlanId: payload.travelPlanId,
         reviewerId: reviewer.id,
-        reviewedId: travelData.userId,
-        rating: payload.rating,
+        reviewedId: travelPlan.userId,
+        rating: ratingFloat,
         comment: payload.comment,
       },
     });
 
     console.log({ createdReview });
 
+    // Calculate Average Rating
     const avg = await tnx.review.aggregate({
       where: {
-        reviewedId: travelData.userId,
-      }, // Calculate average rating for the reviewed user
+        reviewedId: travelPlan.userId,
+      },
       _avg: {
         rating: true,
       },
     });
 
-    const newAvgRating = avg._avg.rating || 0;
+    const newAverageRating = avg._avg.rating || 0;
 
-    // 3️⃣ Update User Profile Rating (NOT REVIEW)
-    await tnx.review.update({
+    // Update reviewed user's profile rating
+    await tnx.user.update({
       where: {
-        id: travelData.userId,
+        id: travelPlan.userId,
       },
       data: {
-        rating:  newAvgRating ,
+        rating: newAverageRating,
       },
     });
 
