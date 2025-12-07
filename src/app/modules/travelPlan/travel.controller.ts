@@ -74,6 +74,22 @@ const updateTravelPlanById = catchAsync(
   }
 );
 
+// Get My Travel Plans
+const getMyTravelPlans = catchAsync(
+  async (req: Request & { user?: IAuthUser }, res: Response) => {
+    const user = req.user;
+
+    const result = await TravelPlanService.getMyTravelPlans(user as IAuthUser);
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "My travel plans data fetched!",
+      data: result,
+    });
+  }
+);
+
 const getTravelPlanById = catchAsync(async (req: Request, res: Response) => {
   const { id } = req.params;
   const result = await TravelPlanService.getTravelPlanById(id);
@@ -102,4 +118,5 @@ export const TravelPlanController = {
   updateTravelPlanById,
   getTravelPlanById,
   deleteTravelPlanById,
+  getMyTravelPlans,
 };

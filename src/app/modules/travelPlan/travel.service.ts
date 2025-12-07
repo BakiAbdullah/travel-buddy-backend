@@ -13,6 +13,7 @@ import {
   travelTypeEnumValues,
   visibilityEnumValues,
 } from "./travel.constant";
+import { IAuthUser } from "../../interfaces/user";
 
 const createTravelPlansIntoDB = async (
   userId: string,
@@ -154,6 +155,48 @@ const getAllTravelPlans = async (filters: any, options: IPaginationOptions) => {
   };
 };
 
+// Get My Travel Plans
+const getMyTravelPlans = async (user: IAuthUser) => {
+  // Find the user
+  const userInfo = await prisma.user.findUniqueOrThrow({
+    where: {
+      email: user?.email,
+      id: user?.id,
+    },
+    select: {
+      id: true,
+      email: true,
+      needPasswordChange: true,
+      visitedCountries: true,
+      currentLocation: true,
+      bio: true,
+      role: true,
+      status: true,
+    },
+  });
+
+  // Find travel plans for the user
+  const travelPlan = await prisma.travelPlans.findMany({
+    where: {
+      userId: userInfo.id,
+    },
+    select: {
+      id: true,
+      travelRequests: true,
+      budgetRange: true,
+      visibility: true,
+      itinerary: true,
+      destination: true,
+      startDateTime: true,
+      travelType: true,
+      reviews: true,
+      endDateTime: true
+    },
+  });
+
+  return { ...travelPlan };
+};
+
 // Update Travel Plan by ID
 const updateTravelPlanById = async (
   id: string,
@@ -206,4 +249,5 @@ export const TravelPlanService = {
   getTravelPlanById,
   deleteTravelPlanById,
   updateTravelPlanById,
+  getMyTravelPlans,
 };

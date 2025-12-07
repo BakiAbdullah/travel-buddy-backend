@@ -137,8 +137,6 @@ const updateMyProfie = async (user: IAuthUser, req: Request) => {
   return { ...profileInfo };
 };
 
-
-
 const getAllUsersFromDB = async (params: any, options: IPaginationOptions) => {
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
   const { searchTerm, ...filterData } = params;
@@ -170,7 +168,7 @@ const getAllUsersFromDB = async (params: any, options: IPaginationOptions) => {
     andConditions.length > 0 ? { AND: andConditions } : {};
 
   const result = await prisma.user.findMany({
-    where: whereConditions,
+    where: whereConditions && { role: UserRole.USER },
     skip,
     take: limit,
     orderBy:
@@ -184,6 +182,7 @@ const getAllUsersFromDB = async (params: any, options: IPaginationOptions) => {
     select: {
       id: true,
       email: true,
+      name: true,
       role: true,
       needPasswordChange: true,
       status: true,
@@ -214,11 +213,30 @@ const getAllUsersFromDB = async (params: any, options: IPaginationOptions) => {
   };
 };
 
-const getSingleUserFromDB = async (id: string): Promise<User> => {
+const getSingleUserFromDB = async (id: string): Promise<any> => {
   const result = await prisma.user.findUniqueOrThrow({
     where: {
       id,
+      role: UserRole.USER
     },
+    select: {
+      id: true,
+      email: true,
+      name: true,
+      role: true,
+      needPasswordChange: true,
+      status: true,
+      profileImage: true,
+      travelInterests: true,
+      travelPlans: true,
+      visitedCountries: true,
+      reviewsGiven: true,
+      reviewsReceived: true,
+      rating: true,
+      contactNumber: true,
+      createdAt: true,
+      updatedAt: true,
+    }
   });
   return result;
 };

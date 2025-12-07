@@ -6,8 +6,13 @@ import { TravelPlanController } from "./travel.controller";
 const router = express.Router();
 
 router.get(
-  "/match",
+  "/my-plans",
   checkAuth(UserRole.ADMIN, UserRole.USER),
+  TravelPlanController.getMyTravelPlans
+);
+router.get(
+  "/match",
+  checkAuth(UserRole.ADMIN),
   TravelPlanController.getAllTravelPlans
 );
 
