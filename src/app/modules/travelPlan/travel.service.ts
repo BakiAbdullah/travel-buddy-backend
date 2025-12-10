@@ -13,7 +13,7 @@ import {
   travelTypeEnumValues,
   visibilityEnumValues,
 } from "./travel.constant";
-import { IAuthUser } from "../../interfaces/user";
+import { IAuthUser, IMatchParams } from "../../interfaces/user";
 
 const createTravelPlansIntoDB = async (
   userId: string,
@@ -151,6 +151,72 @@ const getAllTravelPlans = async (filters: any, options: IPaginationOptions) => {
       page,
       limit,
     },
+    data: result,
+  };
+};
+
+/**
+ * Get Matched Travelers
+ */
+export const getMatchedTravelersForLoggedInUser = async (
+  userId: string,
+  options: IPaginationOptions
+) => {
+  const { limit, page, skip } = paginationHelper.calculatePagination(options);
+
+  // 1️⃣ Fetch all travel plans of the logged-in user
+  const userTravelPlans = await prisma.travelPlans.findMany({
+    where: { userId },
+  });
+
+  if (!userTravelPlans.length) {
+    return {
+      meta: { total: 0, page, limit },
+      data: [],
+    };
+  }
+
+  // 2️⃣ Build matching conditions based on user's travel plans
+  const orConditions: Prisma.TravelPlansWhereInput[] = [];
+
+  userTravelPlans.forEach((plan) => {
+    orConditions.push({
+      destination: plan.destination,
+      travelType: plan.travelType,
+      startDateTime: plan.startDateTime,
+      // add other matching criteria if needed, e.g., visibility, endDateTime, etc.
+    });
+  });
+
+  // 3️⃣ Fetch matching travel plans excluding user's own plans
+  const result = await prisma.travelPlans.findMany({
+    where: {
+      AND: [
+        { userId: { not: userId } }, // exclude user's own plans
+        { OR: orConditions },
+      ],
+    },
+    skip,
+    take: limit,
+    orderBy:
+      options.sortBy && options.sortOrder
+        ? { [options.sortBy]: options.sortOrder }
+        : { createdAt: "desc" },
+    include: {
+      user: true,
+      travelRequests: true,
+    },
+  });
+
+  // 4️⃣ Count total matched plans
+  const total = await prisma.travelPlans.count({
+    where: {
+      AND: [{ userId: { not: userId } }, { OR: orConditions }],
+    },
+  });
+
+  return {
+    meta: { total, page, limit },
     data: result,
   };
 };
@@ -365,6 +431,7 @@ const deleteTravelPlanById = async (id: string) => {
 export const TravelPlanService = {
   createTravelPlansIntoDB,
   getAllTravelPlans,
+  getMatchedTravelersForLoggedInUser,
   getTravelPlanById,
   deleteTravelPlanById,
   updateTravelPlanById,

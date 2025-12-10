@@ -73,6 +73,8 @@ const updateUserById = catchAsync(
   }
 );
 
+
+// Get All Users
 const getAllUsersFromDB = catchAsync(async (req: Request, res: Response) => {
   const filters = pickQuery(req.query, userFilterableFields);
   const options = pickQuery(req.query, [

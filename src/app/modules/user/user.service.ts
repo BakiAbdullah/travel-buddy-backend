@@ -4,7 +4,7 @@ import { Request } from "express";
 import config from "../../../config";
 import { prisma } from "../../../shared/prismaInstance";
 import { fileUploaderUtils } from "../../../helpers/fileUploader";
-import { IAuthUser } from "../../interfaces/user";
+import { IAuthUser, IMatchParams } from "../../interfaces/user";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 import { IPaginationOptions } from "../../interfaces/pagination";
 import { userSearchAbleFields } from "./user.constant";
@@ -135,6 +135,7 @@ const softDeleteUser = async (id: string) => {
   });
 };
 
+// Get all users from db
 const getAllUsersFromDB = async (params: any, options: IPaginationOptions) => {
   const { page, limit, skip } = paginationHelper.calculatePagination(options);
   const { searchTerm, ...filterData } = params;
@@ -213,6 +214,7 @@ const getAllUsersFromDB = async (params: any, options: IPaginationOptions) => {
   };
 };
 
+
 const getSingleUserFromDB = async (id: string): Promise<any> => {
   const result = await prisma.user.findUniqueOrThrow({
     where: {
@@ -246,7 +248,7 @@ const updateUserById = async (id: string, payload: any) => {
   const isUserExist = await prisma.user.findUnique({
     where: {
       id: id,
-      isDeleted: false
+      isDeleted: false,
     },
   });
 

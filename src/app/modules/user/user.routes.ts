@@ -8,8 +8,15 @@ import { UserRole } from "@prisma/client";
 
 const router = express.Router();
 
+/**
+ * Get All users
+ */
 router.get("/", userController.getAllUsersFromDB);
 
+
+/**
+ * Get Single user
+ */
 router.get("/:id", userController.getSingleUserFromDB);
 
 /**
@@ -21,8 +28,9 @@ router.patch(
   userController.softDeleteUser
 );
 
-
-
+/**
+ * Create Admin
+ */
 router.post(
   "/create-admin",
   checkAuth(UserRole.ADMIN),
@@ -33,6 +41,9 @@ router.post(
   }
 );
 
+/**
+ * Register
+ */
 router.post(
   "/register",
   fileUploaderUtils.upload.single("file"),
@@ -51,6 +62,9 @@ router.patch(
   userController.updateUserById
 );
 
+/**
+ * Update me
+ */
 router.patch(
   "/me/update",
   checkAuth(UserRole.USER, UserRole.ADMIN),

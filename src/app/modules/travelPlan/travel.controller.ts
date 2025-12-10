@@ -54,6 +54,47 @@ const getAllTravelPlans = catchAsync(
   }
 );
 
+/**
+ * Get Matched Travelers
+ */
+
+const getMatchedTravelersForLoggedInUser = catchAsync(
+  async (req: Request & { user?: IAuthUser }, res: Response) => {
+    const currentUserId = req.user?.id;
+
+    const filters = pickQuery(req.query, [
+      "searchTerm",
+      "startDateTime",
+      "endDateTime",
+      "destination",
+      "itinerary",
+      "travelType",
+      "visibility",
+    ]);
+
+    // const options = pickQuery(req.query, [
+    //   "limit",
+    //   "page",
+    //   "sortBy",
+    //   "sortOrder",
+    // ]);
+
+    const result = await TravelPlanService.getMatchedTravelersForLoggedInUser(
+      currentUserId!,
+      filters,
+      // options
+    );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Matched travelers based on your travel plans!",
+      meta: result.meta,
+      data: result.data,
+    });
+  }
+);
+
 const updateTravelPlanById = catchAsync(
   async (req: Request & { user?: IAuthUser }, res: Response) => {
     // const user = req.user;
@@ -131,6 +172,7 @@ const deleteTravelPlanById = catchAsync(async (req: Request, res: Response) => {
 export const TravelPlanController = {
   createTravelPlansIntoDB,
   getAllTravelPlans,
+  getMatchedTravelersForLoggedInUser,
   updateTravelPlanById,
   getTravelPlanById,
   deleteTravelPlanById,

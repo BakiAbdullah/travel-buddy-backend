@@ -10,8 +10,20 @@ router.get(
   checkAuth(UserRole.ADMIN, UserRole.USER),
   TravelPlanController.getMyTravelPlans
 );
+
+// Get Recommended / getMatchedTravelPlans Travel Plan for user
+
 router.get(
   "/match",
+  checkAuth(UserRole.USER),
+  TravelPlanController.getMatchedTravelersForLoggedInUser 
+);
+
+/**
+ * Get All Travel Plans for Admin 
+ */ 
+router.get(
+  "/",
   checkAuth(UserRole.ADMIN),
   TravelPlanController.getAllTravelPlans
 );
@@ -27,7 +39,7 @@ router.post(
  */
 router.patch(
   "/:id",
-  checkAuth(UserRole.USER),
+  checkAuth(UserRole.USER, UserRole.ADMIN),
   TravelPlanController.updateTravelPlanById
 );
 
