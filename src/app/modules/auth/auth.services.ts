@@ -179,7 +179,7 @@ const resetPassword = async (
   );
 
   if (!isValidToken) {
-    throw new ApiError(httpStatus.FORBIDDEN, "Forbidden!");
+    throw new ApiError(httpStatus.FORBIDDEN, "Forbidden from auth service!");
   }
 
   // hash password

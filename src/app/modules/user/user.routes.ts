@@ -5,11 +5,23 @@ import { fileUploaderUtils } from "../../../helpers/fileUploader";
 import { checkAuth } from "../../middlewares/checkAuth";
 import { UserRole } from "@prisma/client";
 
+
 const router = express.Router();
 
 router.get("/", userController.getAllUsersFromDB);
 
-router.get("/:id",  userController.getSingleUserFromDB);
+router.get("/:id", userController.getSingleUserFromDB);
+
+/**
+ * Soft Delete User id
+ */
+router.patch(
+  "/:id",
+  checkAuth(UserRole.ADMIN),
+  userController.softDeleteUser
+);
+
+
 
 router.post(
   "/create-admin",
@@ -30,9 +42,18 @@ router.post(
   }
 );
 
+/**
+ * Update User by id (Working...)
+ */
 router.patch(
-  "/update-my-profile",
-  checkAuth(UserRole.ADMIN, UserRole.USER),
+  "/update/:id",
+  checkAuth(UserRole.ADMIN),
+  userController.updateUserById
+);
+
+router.patch(
+  "/me/update",
+  checkAuth(UserRole.USER, UserRole.ADMIN),
   fileUploaderUtils.upload.single("file"),
   (req: Request, res: Response, next: NextFunction) => {
     if (req.body.data) {
@@ -41,5 +62,6 @@ router.patch(
     return userController.updateMyProfie(req, res, next);
   }
 );
+
 
 export const userRoutes = router;

@@ -17,6 +17,17 @@ const createAdmin = catchAsync(async (req: Request, res: Response) => {
   });
 });
 
+const softDeleteUser = catchAsync(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const result = await userService.softDeleteUser(id);
+  sendResponse(res, {
+    statusCode: httpStatus.OK,
+    success: true,
+    message: "User Deleted successfuly!",
+    data: result,
+  });
+});
+
 const createUser = catchAsync(async (req: Request, res: Response) => {
   const result = await userService.createUser(req);
   sendResponse(res, {
@@ -38,6 +49,25 @@ const updateMyProfie = catchAsync(
       statusCode: httpStatus.OK,
       success: true,
       message: "Profile updated!",
+      data: result,
+    });
+  }
+);
+
+// Update User By Admin
+const updateUserById = catchAsync(
+  async (req: Request, res: Response) => {
+    console.log("Update Profile By Admin Controller hit");
+    const { id } = req.params;
+    const result = await userService.updateUserById(
+      id,
+      req.body
+    );
+
+    sendResponse(res, {
+      statusCode: httpStatus.OK,
+      success: true,
+      message: "Travel plans updated successfully!",
       data: result,
     });
   }
@@ -65,7 +95,7 @@ const getAllUsersFromDB = catchAsync(async (req: Request, res: Response) => {
 
 // GEt Single User
 const getSingleUserFromDB = catchAsync(async (req: Request, res: Response) => {
-  const {id} = req.params
+  const { id } = req.params;
 
   const result = await userService.getSingleUserFromDB(id);
 
@@ -76,8 +106,6 @@ const getSingleUserFromDB = catchAsync(async (req: Request, res: Response) => {
     data: result,
   });
 });
-
-
 
 // const changeProfileStatus = catchAsync(async (req: Request, res: Response) => {
 //   const { id } = req.params;
@@ -127,4 +155,6 @@ export const userController = {
   updateMyProfie,
   getAllUsersFromDB,
   getSingleUserFromDB,
+  softDeleteUser,
+  updateUserById,
 };

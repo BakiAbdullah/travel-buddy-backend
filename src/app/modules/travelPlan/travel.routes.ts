@@ -36,7 +36,7 @@ router.patch(
  */
 router.get(
   "/:id",
-  checkAuth(UserRole.ADMIN),
+  checkAuth(UserRole.ADMIN, UserRole.USER),
   TravelPlanController.getTravelPlanById
 );
 
@@ -45,7 +45,7 @@ router.get(
  */
 router.delete(
   "/:id",
-  checkAuth(UserRole.ADMIN),
+  checkAuth(UserRole.ADMIN, UserRole.USER),
   TravelPlanController.deleteTravelPlanById
 );
 

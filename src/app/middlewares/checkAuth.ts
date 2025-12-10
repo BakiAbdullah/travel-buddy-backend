@@ -13,7 +13,10 @@ export const checkAuth = (...roles: UserRole[]) => {
     next: NextFunction
   ) => {
     try {
-      const token = req.headers.authorization || req.cookies.accessToken;
+      const token =
+        req.headers.authorization ||
+        req.cookies.accessToken ||
+        req.headers.token;
 
       // Case 1: Token not available
       if (!token) {
@@ -33,7 +36,7 @@ export const checkAuth = (...roles: UserRole[]) => {
 
       // Case 2: Not an admin role
       if (roles.length && !roles.includes(verifiedUser.role)) {
-        throw new ApiError(httpStatus.FORBIDDEN, "Forbidden!");
+        throw new ApiError(httpStatus.FORBIDDEN, "You are Forbidden from checkAuth!");
       }
 
       next();

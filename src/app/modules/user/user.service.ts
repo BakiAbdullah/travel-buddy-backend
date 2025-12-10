@@ -8,6 +8,8 @@ import { IAuthUser } from "../../interfaces/user";
 import { paginationHelper } from "../../../helpers/paginationHelper";
 import { IPaginationOptions } from "../../interfaces/pagination";
 import { userSearchAbleFields } from "./user.constant";
+import ApiError from "../../errors/ApiError";
+import httpStatus from "http-status";
 
 const createAdmin = async (req: Request): Promise<User> => {
   const file = req.file;
@@ -71,70 +73,66 @@ const createUser = async (req: Request): Promise<User> => {
   return result;
 };
 
-// Update profile
-const updateMyProfie = async (user: IAuthUser, req: Request) => {
-  const userInfo = await prisma.user.findUniqueOrThrow({
+// Update My Profile
+const updateMyProfie = async (user: IAuthUser | undefined, req: Request) => {
+  if (!user || !user.email) {
+    throw new ApiError(httpStatus.UNAUTHORIZED, "Not authenticated");
+  }
+
+  const userInfo = await prisma.user.findUnique({
     where: {
-      email: user?.email,
-      status: UserStatus.ACTIVE,
+      id: user.id,
+      // status: UserStatus.ACTIVE,
     },
   });
 
+  if (!userInfo) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
 
   const file = req.file;
 
-  // File upload
   if (file) {
     const uploadToCloudinary = await fileUploaderUtils.uploadToCloudinary(file);
     req.body.profileImage = uploadToCloudinary?.secure_url;
   }
 
-  let profileInfo;
+  const data: any = { ...req.body };
 
-  if (userInfo.role === UserRole.ADMIN) {
-    profileInfo = await prisma.user.update({
-      where: {
-        email: userInfo.email,
-      },
-      data: req.body,
-    });
-  } else if (userInfo.role === UserRole.USER) {
-    // Merge travelInterests only if user sends it
-    if (req.body.travelInterests) {
-      // Convert to array if single string given
-      const newInterests = Array.isArray(req.body.travelInterests)
-        ? req.body.travelInterests
-        : [req.body.travelInterests];
-
-      req.body.travelInterests = [
-        ...(userInfo.travelInterests ?? []),
-        ...newInterests,
-      ];
-    }
-
-    // Merge visitedCountries
-    if (req.body.visitedCountries) {
-      // Convert to array if single string given
-      const newCountries = Array.isArray(req.body.visitedCountries)
-        ? req.body.visitedCountries
-        : [req.body.visitedCountries];
-
-      req.body.visitedCountries = [
-        ...(userInfo.visitedCountries ?? []),
-        ...newCountries,
-      ];
-    }
-
-    profileInfo = await prisma.user.update({
-      where: {
-        email: userInfo.email,
-      },
-      data: req.body,
-    });
+  if (data.travelInterests) {
+    data.travelInterests = Array.isArray(data.travelInterests)
+      ? data.travelInterests
+      : data.travelInterests.split(",").map((i: string) => i.trim());
   }
 
+  if (data.visitedCountries) {
+    data.visitedCountries = Array.isArray(data.visitedCountries)
+      ? data.visitedCountries
+      : data.visitedCountries.split(",").map((i: string) => i.trim());
+  }
 
-  return { ...profileInfo };
+  const profileInfo = await prisma.user.update({
+    where: { email: user.email },
+    data: data, // ✅ use data, not req.body
+  });
+
+  return profileInfo;
+};
+
+// Soft Delete user by ID
+const softDeleteUser = async (id: string) => {
+  const isUserExists = await prisma.user.findUniqueOrThrow({
+    where: {
+      id: id,
+    },
+  });
+
+  return await prisma.user.update({
+    where: {
+      id: isUserExists.id,
+    },
+    data: { isDeleted: true },
+  });
 };
 
 const getAllUsersFromDB = async (params: any, options: IPaginationOptions) => {
@@ -168,7 +166,7 @@ const getAllUsersFromDB = async (params: any, options: IPaginationOptions) => {
     andConditions.length > 0 ? { AND: andConditions } : {};
 
   const result = await prisma.user.findMany({
-    where: whereConditions && { role: UserRole.USER },
+    where: whereConditions && { role: UserRole.USER, isDeleted: false },
     skip,
     take: limit,
     orderBy:
@@ -183,6 +181,8 @@ const getAllUsersFromDB = async (params: any, options: IPaginationOptions) => {
       id: true,
       email: true,
       name: true,
+      isDeleted: true,
+      isVerified: true,
       role: true,
       needPasswordChange: true,
       status: true,
@@ -217,7 +217,7 @@ const getSingleUserFromDB = async (id: string): Promise<any> => {
   const result = await prisma.user.findUniqueOrThrow({
     where: {
       id,
-      role: UserRole.USER
+      role: UserRole.USER,
     },
     select: {
       id: true,
@@ -236,9 +236,45 @@ const getSingleUserFromDB = async (id: string): Promise<any> => {
       contactNumber: true,
       createdAt: true,
       updatedAt: true,
-    }
+    },
   });
   return result;
+};
+
+// Update User By Id By Admin
+const updateUserById = async (id: string, payload: any) => {
+  const isUserExist = await prisma.user.findUnique({
+    where: {
+      id: id,
+      isDeleted: false
+    },
+  });
+
+  if (!isUserExist) {
+    throw new ApiError(httpStatus.NOT_FOUND, "User not found");
+  }
+
+  // // Converting plain date to ISO if present
+  // const updatedPayload: any = { ...payload };
+
+  // if (payload.startDateTime) {
+  //   updatedPayload.startDateTime = new Date(
+  //     `${payload.startDateTime}T00:00:00Z`
+  //   );
+  // }
+
+  // if (payload.endDateTime) {
+  //   updatedPayload.endDateTime = new Date(`${payload.endDateTime}T00:00:00Z`);
+  // }
+
+  const updatedUser = await prisma.user.update({
+    where: {
+      id: id,
+    },
+    data: payload,
+  });
+
+  return updatedUser;
 };
 
 // const changeProfileStatus = async (id: string, status: UserRole) => {
@@ -425,4 +461,6 @@ export const userService = {
   updateMyProfie,
   getAllUsersFromDB,
   getSingleUserFromDB,
+  softDeleteUser,
+  updateUserById,
 };

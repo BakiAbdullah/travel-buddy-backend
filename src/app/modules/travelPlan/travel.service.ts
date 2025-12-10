@@ -156,13 +156,95 @@ const getAllTravelPlans = async (filters: any, options: IPaginationOptions) => {
 };
 
 // Get My Travel Plans
-const getMyTravelPlans = async (user: IAuthUser) => {
+const getMyTravelPlans = async (
+  user: IAuthUser,
+  filters:any,
+  options: IPaginationOptions
+) => {
+  const { limit, page, skip } = paginationHelper.calculatePagination(options);
+
+  const { searchTerm, ...filterData } = filters;
+  const andConditions: Prisma.TravelPlansWhereInput[] = [];
+
+  /* --------------------------
+     1. searchTerm Filtering
+  --------------------------- */
+  if (searchTerm && typeof searchTerm === "string") {
+    const orConditions: Prisma.TravelPlansWhereInput[] = [];
+
+    // String fields (case-insensitive exact match)
+    stringSearchFields.forEach((field) => {
+      orConditions.push({
+        [field]: {
+          contains: searchTerm,
+          mode: "insensitive",
+        },
+      });
+    });
+
+    // Enum fields (only if valid)
+    enumSearchFields.forEach((field) => {
+      let matchedValue: string | undefined;
+
+      if (field === "travelType") {
+        matchedValue = travelTypeEnumValues.find(
+          (val) => val.toLowerCase() === searchTerm.toLowerCase()
+        );
+      } else if (field === "visibility") {
+        matchedValue = visibilityEnumValues.find(
+          (val) => val.toLowerCase() === searchTerm.toLowerCase()
+        );
+      }
+
+      if (matchedValue) {
+        orConditions.push({ [field]: matchedValue });
+      }
+    });
+
+    if (orConditions.length) {
+      andConditions.push({ OR: orConditions });
+    }
+  }
+
+  // Exact filtering for other fields
+  Object.entries(filterData).forEach(([key, value]) => {
+    if (!value) return;
+
+    if (enumSearchFields.includes(key)) {
+      let matchedValue: string | undefined;
+
+      if (key === "travelType") {
+        matchedValue = travelTypeEnumValues.find(
+          (val) => val.toLowerCase() === (value as string).toLowerCase()
+        );
+      } else if (key === "visibility") {
+        matchedValue = visibilityEnumValues.find(
+          (val) => val.toLowerCase() === (value as string).toLowerCase()
+        );
+      }
+
+      if (matchedValue) andConditions.push({ [key]: matchedValue });
+    } else {
+      andConditions.push({
+        [key]: {
+          contains: value,
+          mode: "insensitive", // case-insensitive
+        },
+      });
+    }
+  });
+
+  // Combine conditions
+  const whereConditions: Prisma.TravelPlansWhereInput =
+    andConditions.length > 0 ? { AND: andConditions } : {};
+
   // Find the user
   const userInfo = await prisma.user.findUniqueOrThrow({
     where: {
       email: user?.email,
       id: user?.id,
     },
+
     select: {
       id: true,
       email: true,
@@ -176,10 +258,17 @@ const getMyTravelPlans = async (user: IAuthUser) => {
   });
 
   // Find travel plans for the user
-  const travelPlan = await prisma.travelPlans.findMany({
+  const result = await prisma.travelPlans.findMany({
     where: {
       userId: userInfo.id,
+      ...whereConditions,
     },
+    skip,
+    take: limit,
+    orderBy:
+      options.sortBy && options.sortOrder
+        ? { [options.sortBy]: options.sortOrder }
+        : { createdAt: "desc" },
     select: {
       id: true,
       travelRequests: true,
@@ -190,11 +279,23 @@ const getMyTravelPlans = async (user: IAuthUser) => {
       startDateTime: true,
       travelType: true,
       reviews: true,
-      endDateTime: true
+      endDateTime: true,
+      user: true,
     },
   });
+  // Count total
+  const total = await prisma.travelPlans.count({
+    where: whereConditions,
+  });
 
-  return { ...travelPlan };
+  return {
+    meta: {
+      total,
+      page,
+      limit,
+    },
+    data: result,
+  };
 };
 
 // Update Travel Plan by ID
@@ -212,11 +313,24 @@ const updateTravelPlanById = async (
     throw new ApiError(httpStatus.NOT_FOUND, "Travel Plan not found");
   }
 
+  // Converting plain date to ISO if present
+  const updatedPayload: any = { ...payload };
+
+  if (payload.startDateTime) {
+    updatedPayload.startDateTime = new Date(
+      `${payload.startDateTime}T00:00:00Z`
+    );
+  }
+
+  if (payload.endDateTime) {
+    updatedPayload.endDateTime = new Date(`${payload.endDateTime}T00:00:00Z`);
+  }
+
   const updatedTravelPlan = await prisma.travelPlans.update({
     where: {
       id: id,
     },
-    data: payload as Prisma.TravelPlansUpdateInput,
+    data: updatedPayload,
   });
 
   return updatedTravelPlan;
@@ -235,6 +349,11 @@ const getTravelPlanById = async (id: string) => {
 };
 
 const deleteTravelPlanById = async (id: string) => {
+  // Delete dependant reviews first
+  await prisma.review.deleteMany({
+    where: { travelPlanId: id },
+  });
+  // After review deleted then we are deleting travel plan
   const travelPlan = await prisma.travelPlans.delete({
     where: {
       id,

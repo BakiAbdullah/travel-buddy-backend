@@ -78,14 +78,30 @@ const updateTravelPlanById = catchAsync(
 const getMyTravelPlans = catchAsync(
   async (req: Request & { user?: IAuthUser }, res: Response) => {
     const user = req.user;
+      const filters = pickQuery(req.query, [
+        "searchTerm",
+        "startDateTime",
+        "endDateTime",
+        "destination",
+        "itinerary",
+        "travelType",
+        "visibility",
+      ]);
+    const options = pickQuery(req.query, [
+      "limit",
+      "page",
+      "sortBy",
+      "sortOrder",
+    ]);
 
-    const result = await TravelPlanService.getMyTravelPlans(user as IAuthUser);
+    const result = await TravelPlanService.getMyTravelPlans(user as IAuthUser, filters, options);
 
     sendResponse(res, {
       statusCode: httpStatus.OK,
       success: true,
       message: "My travel plans data fetched!",
-      data: result,
+      meta: result.meta,
+      data: result.data,
     });
   }
 );
