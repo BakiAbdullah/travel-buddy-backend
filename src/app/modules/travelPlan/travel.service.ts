@@ -323,12 +323,14 @@ const getMyTravelPlans = async (
     },
   });
 
+  const baseWhere: Prisma.TravelPlansWhereInput = {
+    userId: userInfo.id,
+    ...whereConditions,
+  };
+
   // Find travel plans for the user
   const result = await prisma.travelPlans.findMany({
-    where: {
-      userId: userInfo.id,
-      ...whereConditions,
-    },
+    where: baseWhere,
     skip,
     take: limit,
     orderBy:
@@ -337,7 +339,6 @@ const getMyTravelPlans = async (
         : { createdAt: "desc" },
     select: {
       id: true,
-      travelRequests: true,
       budgetRange: true,
       visibility: true,
       itinerary: true,
@@ -347,6 +348,19 @@ const getMyTravelPlans = async (
       reviews: true,
       endDateTime: true,
       user: true,
+      travelRequests: {
+        include: {
+          requester: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              profileImage: true,
+              contactNumber: true,
+            },
+          },
+        },
+      },
     },
   });
   // Count total

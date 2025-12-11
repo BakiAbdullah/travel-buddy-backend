@@ -2,11 +2,13 @@ model TravelRequest {
   id          String        @id @default(uuid())
   planId      String
   requesterId String
+  receiverId  String
   status      RequestStatus @default(PENDING)
 
+  // Relations
   plan      TravelPlans @relation(fields: [planId], references: [id])
-  requester User        @relation(fields: [requesterId], references: [id])
+  requester User        @relation("RequestsSent", fields: [requesterId], references: [id])
+  receiver  User        @relation("RequestsReceived", fields: [receiverId], references: [id])
 
   createdAt DateTime @default(now())
 }
-

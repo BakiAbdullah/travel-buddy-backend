@@ -15,15 +15,15 @@ model User {
   currentLocation    String?
   isVerified         Boolean    @default(false)
   rating             Float      @default(0.0)
-  
 
   // Relations
-  travelPlans     TravelPlans[]
-  reviewsGiven    Review[]        @relation("ReviewsGiven")
-  reviewsReceived Review[]        @relation("ReviewsReceived")
-  payments        Payment[]
-  travelRequests  TravelRequest[]
-  notifications   Notification[]
+  travelPlans            TravelPlans[] // Plans created by this user
+  travelRequestsSent     TravelRequest[] @relation("RequestsSent") // Requests this user sent
+  travelRequestsReceived TravelRequest[] @relation("RequestsReceived") // Requests this user received
+  reviewsGiven           Review[]        @relation("ReviewsGiven")
+  reviewsReceived        Review[]        @relation("ReviewsReceived")
+  payments               Payment[]
+  notifications          Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
