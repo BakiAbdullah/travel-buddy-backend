@@ -2,7 +2,7 @@ import express from "express";
 import { AuthController } from "./auth.controller";
 import { checkAuth } from "../../middlewares/checkAuth";
 import { UserRole } from "@prisma/client";
-// import { auth } from "../../middlewares/auth";
+
 
 const router = express.Router();
 
