@@ -26,4 +26,4 @@ router.get(
   RequestController.getAllRequestsByUser
 );
 
-export const TravelRequest = router;
+export const TravelRequestRoutes = router;

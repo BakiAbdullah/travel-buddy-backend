@@ -1,11 +1,11 @@
 import express from "express";
 
 import { ReviewRoutes } from "../modules/Review/review.routes";
-import { TravelRequest } from "../modules/TravelRequest/travelRequest.routes";
 
 import { AuthRoutes } from "../modules/Auth/auth.routes";
 import { TravelPlanRoutes } from "../modules/TravelPlan/travel.routes";
 import { UserRoutes } from "../modules/User/user.routes";
+import { TravelRequestRoutes } from "../modules/TravelRequest/travelRequest.routes";
 
 const router = express.Router();
 
@@ -24,7 +24,7 @@ const moduleRoutes = [
   },
   {
     path: "/travel-request",
-    route: TravelRequest,
+    route: TravelRequestRoutes,
   },
   {
     path: "/reviews",
