@@ -9,7 +9,7 @@ import router from "./app/routes";
 const app: Application = express();
 app.use(
   cors({
-    origin: "http://localhost:3000",
+    origin: "http://localhost:3000", // need to change with live link
     credentials: true,
   })
 );
