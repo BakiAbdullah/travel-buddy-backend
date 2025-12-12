@@ -9,7 +9,8 @@ import router from "./app/routes";
 const app: Application = express();
 app.use(
   cors({
-    origin: "http://localhost:3000", // need to change with live link
+    origin: ["http://localhost:3000",
+      "https://travel-buddy-frontend-woad.vercel.app"],
     credentials: true,
   })
 );
