@@ -3,68 +3,78 @@ import ApiError from "../../errors/ApiError";
 import { IAuthUser } from "../../interfaces/user";
 import { prisma } from "../../../shared/prismaInstance";
 
-const createReviewIntoDB = async (user: IAuthUser, payload: any) => {
-  // Find Reviewer
-  const reviewer = await prisma.user.findUniqueOrThrow({
-    where: {
-      email: user?.email,
-    },
-  });
 
-  console.log({ reviewer });
 
-  const travelPlan = await prisma.travelPlans.findUniqueOrThrow({
-    where: {
-      id: payload.travelPlanId,
-    },
-  });
+export const createReviewIntoDB = async (user: IAuthUser, payload: any) => {
+  const { travelPlanId, targetUserId, rating, comment } = payload;
 
-  console.log({ travelPlan });
-
-  // You cannot review your own trip
-  if (reviewer.id === travelPlan.userId) {
-    throw new ApiError(httpStatus.BAD_REQUEST, "This is not your trip!");
+  if (!travelPlanId || !targetUserId) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "Missing travelPlanId or targetUserId"
+    );
   }
 
-  // Convert rating to float
-  const ratingFloat = parseFloat(payload.rating);
-  if (isNaN(ratingFloat)) {
+  // Logged-in user (plan owner)
+  const reviewer = await prisma.user.findUniqueOrThrow({
+    where: { email: user?.email },
+  });
+
+  // Travel plan with owner and travelRequests
+  const travelPlan = await prisma.travelPlans.findUniqueOrThrow({
+    where: { id: travelPlanId },
+    include: { user: true, travelRequests: true },
+  });
+
+  // Only plan owner can give reviews
+  if (reviewer.id !== travelPlan.userId) {
+    throw new ApiError(
+      httpStatus.FORBIDDEN,
+      "You can only review buddies for your own trip!"
+    );
+  }
+
+  // Find the buddy in accepted travel requests
+  const acceptedBuddy = travelPlan.travelRequests.find(
+    (r) =>
+      r.requesterId === targetUserId &&
+      (r.status ?? "").toUpperCase() === "ACCEPTED"
+  );
+
+  if (!acceptedBuddy) {
+    throw new ApiError(
+      httpStatus.BAD_REQUEST,
+      "You can only review buddies who joined this trip!"
+    );
+  }
+
+  // Validate rating
+  const ratingFloat = parseFloat(rating);
+  if (isNaN(ratingFloat) || ratingFloat < 1 || ratingFloat > 5) {
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid rating value!");
   }
 
-  return await prisma.$transaction(async (tnx) => {
-    const createdReview = await tnx.review.create({
+  // Transaction: create review and update average rating
+  return await prisma.$transaction(async (tx) => {
+    const createdReview = await tx.review.create({
       data: {
-        travelPlanId: payload.travelPlanId,
+        travelPlanId,
         reviewerId: reviewer.id,
-        reviewedId: travelPlan.userId,
+        reviewedId: targetUserId,
         rating: ratingFloat,
-        comment: payload.comment,
+        comment,
       },
     });
 
-    console.log({ createdReview });
-
-    // Calculate Average Rating
-    const avg = await tnx.review.aggregate({
-      where: {
-        reviewedId: travelPlan.userId,
-      },
-      _avg: {
-        rating: true,
-      },
+    // Update average rating for reviewed user
+    const avg = await tx.review.aggregate({
+      where: { reviewedId: targetUserId },
+      _avg: { rating: true },
     });
 
-    const newAverageRating = avg._avg.rating || 0;
-
-    // Update reviewed user's profile rating
-    await tnx.user.update({
-      where: {
-        id: travelPlan.userId,
-      },
-      data: {
-        rating: newAverageRating,
-      },
+    await tx.user.update({
+      where: { id: targetUserId },
+      data: { rating: avg._avg.rating || 0 },
     });
 
     return createdReview;

@@ -1,75 +1,63 @@
-🚀 Travel Buddy – Backend API (Express + Prisma + PostgreSQL)
+# 🚀 Travel Buddy – Backend API (Express + Prisma + PostgreSQL)
 
 A role-based travel collaboration backend system where users can create travel plans, send join requests, write reviews, and manage their travel activities.
 Built with Node.js, Express, TypeScript, Prisma ORM, and PostgreSQL.
 
-📌 Features Overview
-🔐 Authentication & Authorization
+## 📌 Features Overview
 
-* User Registration (Client-side)
+### 🔐 Authentication & Authorization
 
-Login with JWT
+- User Registration (Client-side)
+- Login with JWT
+- Access & Refresh Token system
+- Role-based Access (ADMIN & USER)
+- Protected Routes
 
-Access & Refresh Token
+### 👤 User Module
 
-Role-based Access (ADMIN & USER)
+- Get my profile (/auth/me)
+- Soft delete user
+- Admin can manage all users
 
-Protected Routes
+### 🧳 Travel Plan Module
 
-👤 User Module
+- Create travel plan
+- Update plan details
+- Get all travel plans with advanced filters:
+  - Search by destination
+  - Filter by date range
+  - Filter by travelType (SOLO, FRIENDS, FAMILY, etc.)
+  - Pagination & Sorting
+- Individual travel plan details
 
-Get my profile (/auth/me)
+### 🤝 Travel Request Module
 
-Soft delete user
+- Send join request to a travel plan
+- Accept / Reject request (Only plan owner)
+- Sender can view sent requests
+- Receiver can view received requests
+- Toggle request status (ACCEPTED / REJECTED)
 
-Admin can manage users
+### ⭐ Review Module
 
-🧳 Travel Plan Module
+- Add review to travel plans
+- Get reviews for a plan
 
-Create travel plan
+## 🛠 Technology Stack
 
-Update plan details
+| Technology | Usage |
+|-----------|--------|
+| Node.js | Runtime |
+| Express.js | Server Framework |
+| TypeScript | Type Safety |
+| Prisma ORM | Database ORM |
+| PostgreSQL | Main Database |
+| JWT | Authentication |
+| Zod | Request Validation |
 
-Get all travel plans with advanced filters:
+## 📂 Project Structure
 
-Search by destination
-
-Filter by date range
-
-Filter by travelType (SOLO, FRIENDS, FAMILY, etc.)
-
-Pagination + Sorting
-
-Individual travel plan details
-
-🤝 Travel Request Module
-
-Send join request to a travel plan
-
-Accept/Reject a request (only plan owner)
-
-Sender can view sent requests
-
-Receiver can view received requests
-
-Toggle request status (ACCEPTED/REJECTED)
-
-⭐ Review Module
-
-Add review to travel plans
-
-Get reviews for a plan
-
-🛠 Technology Stack
-Technology	Usage
-Node.js	Runtime
-Express.js	Server Framework
-TypeScript	Type Safety
-Prisma ORM	Database ORM
-PostgreSQL	Main Database
-JWT	Auth
-Zod	Request Validation
-📂 Project Structure
+```
 src/
  ├── app/
  │   ├── modules/
@@ -87,11 +75,13 @@ src/
  ├── prisma/
  │    ├── schema.prisma
  ├── server.ts
+```
 
-⚙️ Environment Variables
+## ⚙️ Environment Variables
 
 Create a .env file:
 
+```
 PORT=5000
 NODE_ENV=production
 
@@ -102,69 +92,90 @@ JWT_EXPIRES_IN="1d"
 
 JWT_REFRESH_SECRET="your-refresh-secret"
 JWT_REFRESH_EXPIRES_IN="7d"
+```
 
-▶️ Running the Project Locally
+## ▶️ Running the Project Locally
+
 1️⃣ Install dependencies
+```
 npm install
+```
 
 2️⃣ Generate Prisma Client
+```
 npx prisma generate
+```
 
 3️⃣ Run database migrations
+```
 npx prisma migrate deploy
+```
 
 4️⃣ Start development server
+```
 npm run dev
+```
 
-📡 API Endpoints Summary
-Auth
-Method	Endpoint	Access
-POST	/auth/login	Public
-POST	/auth/refresh-token	Public
-GET	/auth/me	Logged-in User
-User
-Method	Endpoint	Access
-GET	/users	Admin
-DELETE	/users/:id	Admin
-Travel Plans
-Method	Endpoint
-POST	/travel-plans
-GET	/travel-plans
-GET	/travel-plans/:id
-PATCH	/travel-plans/:id
-Travel Request
-Method	Endpoint	Description
-POST	/travel-request/:planId	Send join request
-GET	/travel-request/sent	Requests I sent
-GET	/travel-request/received	Requests I received
-PATCH	/travel-request/:id	Accept/Reject
-Reviews
-Method	Endpoint
-POST	/reviews/:planId
-GET	/reviews/:planId
-🐛 Common Issues
-❗ Folder name mismatching on GitHub
+## 📡 API Endpoints Summary
 
-Git tracks case-insensitive changes.
+### Auth
+| Method | Endpoint | Access |
+|--------|----------|--------|
+| POST | /auth/login | Public |
+| POST | /auth/refresh-token | Public |
+| GET | /auth/me | Logged-in User |
+
+### User
+| Method | Endpoint | Access |
+|--------|----------|--------|
+| GET | /users | Admin |
+| DELETE | /users/:id | Admin |
+
+### Travel Plans
+| Method | Endpoint |
+|--------|----------|
+| POST | /travel-plans |
+| GET | /travel-plans |
+| GET | /travel-plans/:id |
+| PATCH | /travel-plans/:id |
+
+### Travel Request
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | /travel-request/:planId | Send join request |
+| GET | /travel-request/sent | Requests I sent |
+| GET | /travel-request/received | Requests I received |
+| PATCH | /travel-request/:id | Accept/Reject |
+
+### Reviews
+| Method | Endpoint |
+|--------|----------|
+| POST | /reviews/:planId |
+| GET | /reviews/:planId |
+
+## 🐛 Common Issues
+
+### ❗ Folder name mismatching on GitHub
+
 Fix:
-
+```
 git mv User user_tmp
 git mv user_tmp User
 git commit -m "Fix folder case"
 git push
+```
 
-🚀 Deployment (Render)
-Fix Prisma P1001
+## 🚀 Deployment (Render)
 
-Use a real DB connection string instead of local:
+Fix Prisma P1001 Error:
 
+Use a remote DB connection string:
+
+```
 postgres://USER:PASSWORD@HOST:5432/traveldb?sslmode=require&schema=public
+```
 
-
-Do NOT use:
-
+❌ Don’t use:
+```
 localhost:5432
-
-📜 License
-
-This project is for educational purposes only.
+```

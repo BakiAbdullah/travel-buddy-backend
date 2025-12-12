@@ -136,6 +136,7 @@ const getAllTravelPlans = async (filters: any, options: IPaginationOptions) => {
         : { createdAt: "desc" },
     include: {
       user: true,
+      reviews:true,
       travelRequests: true,
     },
   });
@@ -222,14 +223,15 @@ export const getMatchedTravelersForLoggedInUser = async (
 };
 
 // Get My Travel Plans
+
 const getMyTravelPlans = async (
   user: IAuthUser,
-  filters:any,
+  filters: any,
   options: IPaginationOptions
 ) => {
   const { limit, page, skip } = paginationHelper.calculatePagination(options);
 
-  const { searchTerm, ...filterData } = filters;
+  const { searchTerm, ...filterData } = filters ?? {};
   const andConditions: Prisma.TravelPlansWhereInput[] = [];
 
   /* --------------------------
@@ -238,7 +240,7 @@ const getMyTravelPlans = async (
   if (searchTerm && typeof searchTerm === "string") {
     const orConditions: Prisma.TravelPlansWhereInput[] = [];
 
-    // String fields (case-insensitive exact match)
+    // String fields (case-insensitive contains)
     stringSearchFields.forEach((field) => {
       orConditions.push({
         [field]: {
@@ -272,10 +274,23 @@ const getMyTravelPlans = async (
     }
   }
 
-  // Exact filtering for other fields
-  Object.entries(filterData).forEach(([key, value]) => {
-    if (!value) return;
+  // ----------------------------
+  // Handle special keys BEFORE generic loop
+  // ----------------------------
+  // e.g., isCompleted is boolean, so convert and push directly (if provided)
+  if (filterData.hasOwnProperty("isCompleted")) {
+    const raw = filterData.isCompleted;
+    const bool = String(raw).toLowerCase() === "true";
+    andConditions.push({ isCompleted: bool });
+    // remove from filterData so generic loop won't touch it
+    delete filterData.isCompleted;
+  }
 
+  // Exact filtering for other fields (generic)
+  Object.entries(filterData).forEach(([key, value]) => {
+    if (value === undefined || value === null || value === "") return;
+
+    // If enum field -> match allowed enum values
     if (enumSearchFields.includes(key)) {
       let matchedValue: string | undefined;
 
@@ -291,10 +306,11 @@ const getMyTravelPlans = async (
 
       if (matchedValue) andConditions.push({ [key]: matchedValue });
     } else {
+      // default: case-insensitive contains for string-like fields
       andConditions.push({
         [key]: {
-          contains: value,
-          mode: "insensitive", // case-insensitive
+          contains: String(value),
+          mode: "insensitive",
         },
       });
     }
@@ -328,7 +344,26 @@ const getMyTravelPlans = async (
     ...whereConditions,
   };
 
-  // Find travel plans for the user
+  // ----------------------------
+  // Auto update completed status (safe, non-blocking)
+  // ----------------------------
+  try {
+    const now = new Date();
+    await prisma.travelPlans.updateMany({
+      where: {
+        userId: userInfo.id,
+        isCompleted: false,
+        endDateTime: { lt: now },
+      },
+      data: {
+        isCompleted: true,
+      },
+    });
+  } catch (err) {
+    console.error("Auto-update isCompleted failed:", err);
+  }
+
+  // Find travel plans for the user (with filters applied)
   const result = await prisma.travelPlans.findMany({
     where: baseWhere,
     skip,
@@ -339,6 +374,7 @@ const getMyTravelPlans = async (
         : { createdAt: "desc" },
     select: {
       id: true,
+      isCompleted: true,
       budgetRange: true,
       visibility: true,
       itinerary: true,
@@ -363,9 +399,10 @@ const getMyTravelPlans = async (
       },
     },
   });
-  // Count total
+
+  // Count total (use same baseWhere so meta is correct)
   const total = await prisma.travelPlans.count({
-    where: whereConditions,
+    where: baseWhere,
   });
 
   return {
@@ -377,6 +414,7 @@ const getMyTravelPlans = async (
     data: result,
   };
 };
+
 
 // Update Travel Plan by ID
 const updateTravelPlanById = async (
@@ -423,6 +461,8 @@ const getTravelPlanById = async (id: string) => {
     },
     include: {
       user: true,
+      travelRequests: true,
+      reviews:true
     },
   });
   return travelPlan;

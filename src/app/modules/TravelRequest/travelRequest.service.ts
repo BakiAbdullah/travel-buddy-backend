@@ -141,6 +141,7 @@ export const getAllRequestsByUser = async (
         plan: {
           select: {
             id: true,
+            isCompleted: true,
             destination: true,
             startDateTime: true,
             endDateTime: true,

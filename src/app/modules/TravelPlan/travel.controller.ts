@@ -127,6 +127,7 @@ const getMyTravelPlans = catchAsync(
         "itinerary",
         "travelType",
         "visibility",
+        "isCompleted"
       ]);
     const options = pickQuery(req.query, [
       "limit",
