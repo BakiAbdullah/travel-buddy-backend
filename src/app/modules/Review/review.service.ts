@@ -3,8 +3,6 @@ import ApiError from "../../errors/ApiError";
 import { IAuthUser } from "../../interfaces/user";
 import { prisma } from "../../../shared/prismaInstance";
 
-
-
 export const createReviewIntoDB = async (user: IAuthUser, payload: any) => {
   const { travelPlanId, targetUserId, rating, comment } = payload;
 
@@ -56,6 +54,20 @@ export const createReviewIntoDB = async (user: IAuthUser, payload: any) => {
 
   // Transaction: create review and update average rating
   return await prisma.$transaction(async (tx) => {
+    const alreadyReviewed = await prisma.review.findFirst({
+      where: {
+        travelPlanId,
+        reviewerId: reviewer.id,
+        reviewedId: targetUserId,
+      },
+    });
+
+    if (alreadyReviewed) {
+      throw new ApiError(
+        httpStatus.BAD_REQUEST,
+        "You already reviewed this buddy for this trip!"
+      );
+    }
     const createdReview = await tx.review.create({
       data: {
         travelPlanId,
