@@ -24,7 +24,6 @@ router.get(
  */ 
 router.get(
   "/",
-  checkAuth(UserRole.ADMIN),
   TravelPlanController.getAllTravelPlans
 );
 
