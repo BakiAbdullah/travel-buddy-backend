@@ -5,7 +5,8 @@ import { checkAuth } from '../../middlewares/checkAuth';
 
 const router = express.Router();
 
-// router.get('/', ReviewController.getAllFromDB);
+router.get('/', ReviewController.getAllFromDB);
+router.get('/testimonials', ReviewController.getTestimonialsFromDB);
 
 router.post(
     '/',

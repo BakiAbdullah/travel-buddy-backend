@@ -2,6 +2,7 @@ model TravelPlans {
   id            String         @id @default(uuid())
   userId        String
   destination   String
+  destinationImages String[]
   startDateTime DateTime
   endDateTime   DateTime
   budgetRange   String?

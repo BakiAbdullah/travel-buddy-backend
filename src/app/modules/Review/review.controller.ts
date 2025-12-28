@@ -4,6 +4,7 @@ import catchAsync from "../../../shared/catchAsync";
 import sendResponse from "../../../shared/sendResponse";
 import { ReviewService } from "./review.service";
 import { IAuthUser } from "../../interfaces/user";
+import pickQuery from "../../../shared/pickQuery";
 
 
 const createReviewIntoDB = catchAsync(
@@ -22,21 +23,35 @@ const createReviewIntoDB = catchAsync(
   }
 );
 
-// const getAllFromDB = catchAsync(async (req: Request, res: Response) => {
-//     const filters = pick(req.query, reviewFilterableFields);
-//     const options = pick(req.query, ['limit', 'page', 'sortBy', 'sortOrder']);
-//     const result = await ReviewService.getAllFromDB(filters, options);
-//     sendResponse(res, {
-//         statusCode: httpStatus.OK,
-//         success: true,
-//         message: 'Reviews retrieval successfully',
-//         meta: result.meta,
-//         data: result.data,
-//     });
-// });
+const getAllFromDB = catchAsync(async (req: Request, res: Response) => {
+    const filters = pickQuery(req.query, [
+      "searchTerm",
+    ]);
+    const options = pickQuery(req.query, ['limit', 'page', 'sortBy', 'sortOrder']);
+    const result = await ReviewService.getAllFromDB(filters, options);
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Reviews retrieval successfully',
+        meta: result.meta,
+        data: result.data,
+    });
+});
+
+const getTestimonialsFromDB = catchAsync(async (req: Request, res: Response) => {
+    
+    const result = await ReviewService.getTestimonialsFromDB();
+    sendResponse(res, {
+        statusCode: httpStatus.OK,
+        success: true,
+        message: 'Testimonials retrieved successfully',
+        data: result.data,
+    });
+});
 
 
 export const ReviewController = {
   createReviewIntoDB,
-  // getAllFromDB
+  getAllFromDB,
+  getTestimonialsFromDB
 };
